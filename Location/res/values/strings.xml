@@ -1,0 +1,7 @@
+<resources>
+
+    <string name="app_name">Location</string>
+
+    <string name="remote_service_permission">Remote Service Permission</string>
+
+</resources>

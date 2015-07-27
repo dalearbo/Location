@@ -1,0 +1,32 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.darpa.location"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="15"
+        android:targetSdkVersion="21" />
+   
+    <permission android:name="com.darpa.location.RobotLocation"
+        android:protectionLevel="normal" 
+        android:label="Robot Location" 
+        android:description="@string/remote_service_permission"/>
+    
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION"/>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <service android:name="LocationService" 
+            		android:exported="true" 
+            		android:permission="com.darpa.location.RobotLocation">
+            		<intent-filter>
+            		    <action android:name="com.darpa.location.RobotLocation"/>
+            		</intent-filter>
+		</service>
+    </application>
+
+</manifest>
