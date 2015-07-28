@@ -4,6 +4,9 @@ package com.darpa.location;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ros.android.android_tutorial_project.JaguarManager;
+import org.ros.android.android_tutorial_project.JaguarServiceReporter;
+
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -23,6 +26,7 @@ public class LocationService extends Service{
 		private Location currentLocation;
 		private Location organicLocation;
 		LocationManager locationManager;
+		private JaguarManager jaguarManager;
 		String tag = "Location";
 
 		///Need to change LocationManager.Passive_Provider to LocationManager.GPS_Provider but doesn't work
@@ -92,7 +96,30 @@ public class LocationService extends Service{
 			locationManager=(LocationManager)getSystemService(Context.LOCATION_SERVICE);
 			LocationListener locationListener = new onboardLocation();
 			locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 500, (float) 0.1, locationListener);
+			
+			jaguarManager = new JaguarManager(this, new JaguarManager.OnConnectedListener() {
+	    		@Override public void onConnected() {
+	    			Log.d(tag, "Jaguar Location connected - adding reporter");
+	    			jaguarManager.add(jaguarServiceReporter);
+	    			
+	    		}
+	    		@Override public void onDisconnected() {
+	    			Log.d(tag, "Jaguar Location disconnected - removing reporter");
+	    			jaguarManager.remove(jaguarServiceReporter);
+	    		}
+	    	});
+			
+			
 		}
+		
+		private JaguarServiceReporter jaguarServiceReporter = new JaguarServiceReporter.Stub() {
+			@Override
+			public void reportLocation(Location location) throws RemoteException {
+				currentLocation=location;
+			}
+		};
+		
+		
 
 		@Override
 		public int onStartCommand(Intent intent, int flags, int startId) {
