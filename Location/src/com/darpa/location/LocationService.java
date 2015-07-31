@@ -4,8 +4,8 @@ package com.darpa.location;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ros.android.android_tutorial_project.JaguarManager;
-import org.ros.android.android_tutorial_project.JaguarServiceReporter;
+import com.darpa.ros.ROSServiceManager;
+import com.darpa.ros.ROSServiceReporter;
 
 import android.app.Service;
 import android.content.Context;
@@ -26,7 +26,7 @@ public class LocationService extends Service{
 		private Location currentLocation;
 		private Location organicLocation;
 		LocationManager locationManager;
-		private JaguarManager jaguarManager;
+		private ROSServiceManager jaguarManager;
 		String tag = "Location";
 
 		///Need to change LocationManager.Passive_Provider to LocationManager.GPS_Provider but doesn't work
@@ -34,16 +34,17 @@ public class LocationService extends Service{
 	////THIS IS THE METHOD TO EDIT TO DETERMINE BEST LOCATION USING OTHER SENSORS///
 		private Location DetermineBestLocation(){
 			Location bestLocation=new Location("");
-			
-			//bestLocation.setLatitude(35.0001d);
-			//bestLocation.setLongitude(70.0002d);
-			//bestLocation.setBearing(15.0f);
-			
+			//DEBUG
+			bestLocation.setLatitude(35.0001d);
+			bestLocation.setLongitude(70.0002d);
+			bestLocation.setBearing(15.0f);
+			//DEBUG//
+			/*
 			if(locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER)==null){
 				bestLocation=organicLocation;
 			}else
 				bestLocation=locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
-				
+				*/
 			return bestLocation;
 			
 		}
@@ -97,7 +98,7 @@ public class LocationService extends Service{
 			LocationListener locationListener = new onboardLocation();
 			locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 500, (float) 0.1, locationListener);
 			
-			jaguarManager = new JaguarManager(this, new JaguarManager.OnConnectedListener() {
+			jaguarManager = new ROSServiceManager(this, new ROSServiceManager.OnConnectedListener() {
 	    		@Override public void onConnected() {
 	    			Log.d(tag, "Jaguar Location connected - adding reporter");
 	    			jaguarManager.add(jaguarServiceReporter);
@@ -112,9 +113,9 @@ public class LocationService extends Service{
 			
 		}
 		
-		private JaguarServiceReporter jaguarServiceReporter = new JaguarServiceReporter.Stub() {
+		private ROSServiceReporter jaguarServiceReporter = new ROSServiceReporter.Stub() {
 			@Override
-			public void reportLocation(Location location) throws RemoteException {
+			public void reportGPS(Location location) throws RemoteException {
 				currentLocation=location;
 			}
 		};
