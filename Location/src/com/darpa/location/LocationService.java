@@ -4,8 +4,8 @@ package com.darpa.location;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.darpa.ros.ROSServiceManager;
-import com.darpa.ros.ROSServiceReporter;
+import org.ros.android.jaguar.ROSServiceManager;
+import org.ros.android.jaguar.ROSServiceReporter;
 
 import android.app.Service;
 import android.content.Context;
@@ -16,6 +16,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.util.Log;
 
 public class LocationService extends Service{
@@ -27,25 +28,15 @@ public class LocationService extends Service{
 		private Location organicLocation;
 		LocationManager locationManager;
 		private ROSServiceManager jaguarManager;
-		String tag = "Location";
+		String tag = "LocationService";
 
-		///Need to change LocationManager.Passive_Provider to LocationManager.GPS_Provider but doesn't work
-
-	////THIS IS THE METHOD TO EDIT TO DETERMINE BEST LOCATION USING OTHER SENSORS///
-		private Location DetermineBestLocation(){
-			Location bestLocation=new Location("");
-			//DEBUG
-			bestLocation.setLatitude(35.0001d);
-			bestLocation.setLongitude(70.0002d);
-			bestLocation.setBearing(15.0f);
-			//DEBUG//
-			/*
-			if(locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER)==null){
-				bestLocation=organicLocation;
-			}else
-				bestLocation=locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
-				*/
-			return bestLocation;
+		
+		private Location startLocation(){
+			Location startLocation=new Location("");
+			startLocation.setLatitude(0d);
+			startLocation.setLongitude(0d);
+			startLocation.setBearing(0.0f);
+			return startLocation;
 			
 		}
 		
@@ -68,8 +59,8 @@ public class LocationService extends Service{
 
 		private class ServiceThread extends Thread {
 			@Override public void run() {
+				currentLocation = startLocation();
 				while(!isInterrupted()) {
-					currentLocation=DetermineBestLocation();
 					while(!isInterrupted()) {
 						List<RobotLocationReporter> targets;
 						synchronized (reporters) {
@@ -94,9 +85,9 @@ public class LocationService extends Service{
 		public void onCreate() {
 			super.onCreate();
 			Log.d(tag,"RobotLocation onCreate");
-			locationManager=(LocationManager)getSystemService(Context.LOCATION_SERVICE);
-			LocationListener locationListener = new onboardLocation();
-			locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 500, (float) 0.1, locationListener);
+			//locationManager=(LocationManager)getSystemService(Context.LOCATION_SERVICE);
+			//LocationListener locationListener = new onboardLocation();
+			//locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 500, (float) 0.1, locationListener);
 			
 			jaguarManager = new ROSServiceManager(this, new ROSServiceManager.OnConnectedListener() {
 	    		@Override public void onConnected() {
@@ -110,23 +101,16 @@ public class LocationService extends Service{
 	    		}
 	    	});
 			
-			
 		}
 		
 		private ROSServiceReporter jaguarServiceReporter = new ROSServiceReporter.Stub() {
 			@Override
 			public void reportGPS(Location location) throws RemoteException {
+				Log.d(tag,"GPS being reported to Location Service");
 				currentLocation=location;
 			}
 		};
 		
-		
-
-		@Override
-		public int onStartCommand(Intent intent, int flags, int startId) {
-			Log.d(tag, "onStartCommand(" + intent + ", " + flags + ", " + startId + ")");
-			return START_STICKY;
-		}
 
 		@Override
 		public void onDestroy() {

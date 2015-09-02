@@ -1,6 +1,6 @@
-package com.darpa.ros;
+package org.ros.android.jaguar;
 
-import com.darpa.location.Location;
+import org.ros.android.jaguar.Location;
 
 interface ROSServiceReporter {
 	void reportGPS(in Location location);

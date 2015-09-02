@@ -1,6 +1,6 @@
-package com.darpa.ros;
+package org.ros.android.jaguar;
 
-import com.darpa.ros.ROSServiceReporter;
+import org.ros.android.jaguar.ROSServiceReporter;
 
 interface ROSService {
 	void add(ROSServiceReporter reporter);

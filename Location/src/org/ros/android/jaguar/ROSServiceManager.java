@@ -1,4 +1,8 @@
-package com.darpa.ros;
+package org.ros.android.jaguar;
+
+import org.ros.android.jaguar.ROSService;
+import org.ros.android.jaguar.ROSServiceReporter;
+
 
 import android.app.Activity;
 import android.app.Service;
@@ -8,17 +12,19 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.util.Log;
 
 
 public class ROSServiceManager {
 
 	private boolean disconnected = false;
-    private ROSService rosService;
-    private static Intent intent = new Intent("org.ros.android.android_tutorial_project");
+    private static ROSService rosService;
+    private static Intent intent = new Intent("com.darpa.ros");
     private OnConnectedListener onConnectedListener;
     private Service service;
     private Activity activity;
+    private String tag = "Socket";
 
     public static interface OnConnectedListener {
     	void onConnected();
@@ -30,34 +36,9 @@ public class ROSServiceManager {
 		this.onConnectedListener = onConnectedListener;
 		service.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
 	}
-	public ROSServiceManager(Activity activity, OnConnectedListener onConnectedListener) {
-    	this.activity = activity;
-		this.onConnectedListener = onConnectedListener;
-		activity.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-	}
+
 	
-	
-	public void publishCommand(float velocity, float angle){
-		
-		String commandString = "MMW !M ";
-		
-		if(velocity>1){
-			Log.e("UVADE","Error! Velocity too large");
-			velocity=1;
-		}
-		
-		int jaguarX = 0;
-		int jaguarY = 0;
-		
-		commandString.concat(jaguarX+" "+jaguarY);
-		Log.d("ROS",commandString);
-		
-		try {
-			rosService.publishCommand(commandString);
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
-	}
+
 	
 	public synchronized void disconnect() {
 		disconnected = true;
@@ -72,7 +53,7 @@ public class ROSServiceManager {
 		try {
 			rosService.add(reporter);
 		} catch (RemoteException e) {
-			Log.e("RSM", "add reporter", e);
+			Log.e(tag, "add reporter", e);
 		}
 	}
 	public synchronized void remove(ROSServiceReporter reporter) {
@@ -81,19 +62,21 @@ public class ROSServiceManager {
 		try {
 			rosService.remove(reporter);
 		} catch (RemoteException e) {
-			Log.e("RSM", "remove reporter", e);
+			Log.e(tag, "remove reporter", e);
 		}
 	}
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
 		@Override public void onServiceDisconnected(ComponentName name) {
-			Log.d("RSM", "onServiceDisconnected");
+			Log.d(tag, "RosService onServiceDisconnected");
 			if (onConnectedListener != null)
 				onConnectedListener.onDisconnected();
 			rosService = null;
 		}
 		@Override public void onServiceConnected(ComponentName name, IBinder service) {
+			Log.d(tag,"RosService onServiceConnected");
 			rosService = ROSService.Stub.asInterface(service);
+			
 			if (onConnectedListener != null)
 				onConnectedListener.onConnected();
 		}
