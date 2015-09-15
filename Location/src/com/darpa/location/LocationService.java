@@ -68,11 +68,20 @@ public class LocationService extends Service{
 						}
 						for(RobotLocationReporter robotLocationReporter : targets) {
 							try {
+								// currentLocation is CORRECT here
+								//Log.d("DALE", "LocationService Lat: " + currentLocation.getLatitude() + " Lon: " + currentLocation.getLongitude());
 								robotLocationReporter.report(currentLocation);
 							} catch (RemoteException e) {
 								e.printStackTrace();
 							}
 						}
+						try {
+							Thread.sleep(500);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
 						
 				}}
 				Log.d(tag,"RobotLocation interrupted");
@@ -107,6 +116,8 @@ public class LocationService extends Service{
 			@Override
 			public void reportGPS(Location location) throws RemoteException {
 				Log.d(tag,"GPS being reported to Location Service");
+				// location is CORRECT here
+				//Log.d("DALE", "LocationService Lat: " + location.getLatitude() + " Lon: " + location.getLongitude());
 				currentLocation=location;
 			}
 		};
