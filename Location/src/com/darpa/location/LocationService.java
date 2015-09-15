@@ -10,6 +10,9 @@ import org.ros.android.jaguar.ROSServiceReporter;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -29,12 +32,13 @@ public class LocationService extends Service{
 		LocationManager locationManager;
 		private ROSServiceManager jaguarManager;
 		String tag = "LocationService";
+		boolean newLocationFlag = false;
 
 		
 		private Location startLocation(){
 			Location startLocation=new Location("");
-			startLocation.setLatitude(0d);
-			startLocation.setLongitude(0d);
+			startLocation.setLatitude(32.996683d);
+			startLocation.setLongitude(-79.970303d);
 			startLocation.setBearing(0.0f);
 			return startLocation;
 			
@@ -68,7 +72,15 @@ public class LocationService extends Service{
 						}
 						for(RobotLocationReporter robotLocationReporter : targets) {
 							try {
-								robotLocationReporter.report(currentLocation);
+								///DEBUG
+								//currentLocation.setLatitude(32.996469);
+								//currentLocation.setLongitude(-79.970593);
+								//currentLocation.setBearing(60);
+								if(newLocationFlag){
+									robotLocationReporter.report(currentLocation);
+									newLocationFlag=false;
+								}
+								
 							} catch (RemoteException e) {
 								e.printStackTrace();
 							}
@@ -102,12 +114,39 @@ public class LocationService extends Service{
 	    	});
 			
 		}
+		/*
+		float[] mGravity;
+		float[] mGeomagnetic;
+		public void onSensorChanged(SensorEvent event) {
+		    if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+		        mGravity = event.values;
+		    if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+		        mGeomagnetic = event.values;
+		    if (mGravity != null && mGeomagnetic != null) {
+		        float R[] = new float[9];
+		        float I[] = new float[9];
+		        boolean success = SensorManager.getRotationMatrix(R, I, mGravity,
+		                mGeomagnetic);
+		        if (success) {
+		            float orientation[] = new float[3];
+		            SensorManager.getOrientation(R, orientation);
+		            float radianHeading = orientation[0];
+					float bearing = (float) ((90-radianHeading*180/Math.PI)%360);
+					//currentLocation.setBearing(bearing);
+					Log.d(tag,"Bearing: "+bearing);
+		        }
+		    }
+		}*/
+		
 		
 		private ROSServiceReporter jaguarServiceReporter = new ROSServiceReporter.Stub() {
 			@Override
 			public void reportGPS(Location location) throws RemoteException {
-				Log.d(tag,"GPS being reported to Location Service");
-				currentLocation=location;
+				//Log.d("DEBUG3","Location updated in reporter from "+currentLocation.getLatitude()+" to "+location.getLatitude());
+				currentLocation.setLatitude(location.getLatitude());
+				currentLocation.setLongitude(location.getLongitude());
+				currentLocation.setBearing(location.getBearing());
+				newLocationFlag=true;
 			}
 		};
 		
