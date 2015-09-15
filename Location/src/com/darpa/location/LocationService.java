@@ -72,19 +72,20 @@ public class LocationService extends Service{
 						}
 						for(RobotLocationReporter robotLocationReporter : targets) {
 							try {
-								///DEBUG
-								//currentLocation.setLatitude(32.996469);
-								//currentLocation.setLongitude(-79.970593);
-								//currentLocation.setBearing(60);
-								if(newLocationFlag){
-									robotLocationReporter.report(currentLocation);
-									newLocationFlag=false;
-								}
-								
+								// currentLocation is CORRECT here
+								//Log.d("DALE", "LocationService Lat: " + currentLocation.getLatitude() + " Lon: " + currentLocation.getLongitude());
+								robotLocationReporter.report(currentLocation);
 							} catch (RemoteException e) {
 								e.printStackTrace();
 							}
 						}
+						try {
+							Thread.sleep(500);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
 						
 				}}
 				Log.d(tag,"RobotLocation interrupted");
@@ -142,11 +143,8 @@ public class LocationService extends Service{
 		private ROSServiceReporter jaguarServiceReporter = new ROSServiceReporter.Stub() {
 			@Override
 			public void reportGPS(Location location) throws RemoteException {
-				//Log.d("DEBUG3","Location updated in reporter from "+currentLocation.getLatitude()+" to "+location.getLatitude());
-				currentLocation.setLatitude(location.getLatitude());
-				currentLocation.setLongitude(location.getLongitude());
-				currentLocation.setBearing(location.getBearing());
-				newLocationFlag=true;
+				//Log.d("DALE", "LocationService Lat: " + location.getLatitude() + " Lon: " + location.getLongitude());
+				currentLocation=location;
 			}
 		};
 		
