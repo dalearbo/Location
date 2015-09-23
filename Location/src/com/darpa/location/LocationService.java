@@ -79,14 +79,6 @@ public class LocationService extends Service{
 								e.printStackTrace();
 							}
 						}
-						try {
-							Thread.sleep(500);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						
-						
 				}}
 				Log.d(tag,"RobotLocation interrupted");
 			}
