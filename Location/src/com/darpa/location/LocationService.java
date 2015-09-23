@@ -28,11 +28,11 @@ public class LocationService extends Service{
 	//through the reporter, or call robotLocation.requestLocation();
 
 		private Location currentLocation;
-		private Location organicLocation;
 		LocationManager locationManager;
 		private ROSServiceManager jaguarManager;
 		String tag = "LocationService";
 		boolean newLocationFlag = false;
+		boolean useDeadReckoning;
 
 		
 		private Location startLocation(){
@@ -44,22 +44,6 @@ public class LocationService extends Service{
 			
 		}
 		
-
-		private class onboardLocation implements LocationListener {
-			@Override
-			public void onLocationChanged(Location location) {
-				organicLocation=location;
-			}
-			@Override
-			public void onStatusChanged(String provider, int status, Bundle extras) {}
-			@Override
-			public void onProviderEnabled(String provider) {}
-			@Override
-			public void onProviderDisabled(String provider) {}
-			
-		}
-		
-
 
 		private class ServiceThread extends Thread {
 			@Override public void run() {
@@ -73,7 +57,6 @@ public class LocationService extends Service{
 						for(RobotLocationReporter robotLocationReporter : targets) {
 							try {
 								// currentLocation is CORRECT here
-								//Log.d("DALE", "LocationService Lat: " + currentLocation.getLatitude() + " Lon: " + currentLocation.getLongitude());
 								robotLocationReporter.report(currentLocation);
 							} catch (RemoteException e) {
 								e.printStackTrace();
@@ -90,6 +73,9 @@ public class LocationService extends Service{
 		public void onCreate() {
 			super.onCreate();
 			Log.d(tag,"RobotLocation onCreate");
+			
+			useDeadReckoning = false;
+			
 			//locationManager=(LocationManager)getSystemService(Context.LOCATION_SERVICE);
 			//LocationListener locationListener = new onboardLocation();
 			//locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 500, (float) 0.1, locationListener);
@@ -135,9 +121,39 @@ public class LocationService extends Service{
 		private ROSServiceReporter jaguarServiceReporter = new ROSServiceReporter.Stub() {
 			@Override
 			public void reportGPS(Location location) throws RemoteException {
-				//Log.d("DALE", "LocationService Lat: " + location.getLatitude() + " Lon: " + location.getLongitude());
-				currentLocation=location;
+				//Automatically switch to dead reckoning (using wheels) if GPS is not updated
+				if(location.distanceTo(currentLocation)==0.0d){
+					useDeadReckoning=true;
+				} else{
+					currentLocation=location;
+					useDeadReckoning=false;
+				}
 			}
+
+			@Override
+			public void reportWheel(double forward, double right) throws RemoteException {
+				if(useDeadReckoning){
+					//forward and right come in as meters, need to be added to location code
+					double distanceTravelled = Math.sqrt(Math.pow(forward,2)+Math.pow(right,2));
+					double angle = Math.atan2(right,forward);		//in Radians
+					currentLocation.setBearing((float) (currentLocation.getBearing()+angle*180/Math.PI));
+					double xInMeters=distanceTravelled*Math.sin(angle);
+					double yInMeters=distanceTravelled*Math.cos(angle);
+					
+					currentLocation.setLongitude(currentLocation.getLongitude()+metersToLon(xInMeters,currentLocation));
+					currentLocation.setLatitude(currentLocation.getLatitude()+metersToLat(yInMeters,currentLocation));
+				}	
+			}
+			//The below code copied from the 'Useful Math' class in UVADE
+			private double earthRadiusInMeters = 6378137;
+			
+			private double metersToLat(double meters, Location originalLocation){
+				return Math.toDegrees(Math.asin((Math.sin(Math.toRadians(originalLocation.getLatitude()))*Math.cos(meters/earthRadiusInMeters))+(Math.cos(Math.toRadians(originalLocation.getLatitude()))*Math.sin(meters/earthRadiusInMeters))))-originalLocation.getLatitude();
+				}
+			private double metersToLon(double meters, Location originalLocation){
+				return Math.toDegrees(Math.toRadians(originalLocation.getLongitude())+ Math.atan2((Math.sin(meters/earthRadiusInMeters)*Math.cos(Math.toRadians(originalLocation.getLongitude()))),(Math.cos(meters/earthRadiusInMeters)-Math.pow(Math.sin(Math.toRadians(originalLocation.getLongitude())),2))))-originalLocation.getLongitude();
+				}
+			
 		};
 		
 
